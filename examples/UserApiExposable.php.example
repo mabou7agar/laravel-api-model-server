@@ -1,0 +1,71 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Foundation\Auth\User as Authenticatable;
+use Illuminate\Notifications\Notifiable;
+use Laravel\Passport\HasApiTokens;
+use ApiServerPackage\Contracts\ApiExposable;
+use ApiServerPackage\Traits\ApiExposableTrait;
+
+class User extends Authenticatable implements ApiExposable
+{
+    use HasApiTokens, Notifiable, ApiExposableTrait;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array
+     */
+    protected $fillable = [
+        'name', 'email', 'password',
+    ];
+
+    /**
+     * The attributes that should be hidden for arrays.
+     *
+     * @var array
+     */
+    protected $hidden = [
+        'password', 'remember_token',
+    ];
+
+    /**
+     * The attributes that should be cast to native types.
+     *
+     * @var array
+     */
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
+
+    /**
+     * Override the API fields to exclude sensitive information.
+     *
+     * @return array
+     */
+    public function getApiFields(): array
+    {
+        return ['id', 'name', 'email', 'created_at', 'updated_at'];
+    }
+
+    /**
+     * Define allowed relationships for API inclusion.
+     *
+     * @return array
+     */
+    public function getApiRelations(): array
+    {
+        return ['posts', 'comments']; // Example relationships
+    }
+
+    /**
+     * Define custom API scopes for this model.
+     *
+     * @return array
+     */
+    public function getApiScopes(): array
+    {
+        return ['users:read', 'users:write', 'users:delete', 'users:create'];
+    }
+}

@@ -1,0 +1,36 @@
+{
+    "name": "bagisto/laravel-api-server",
+    "description": "A Laravel package for creating dynamic API endpoints with Eloquent model integration",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Bagisto",
+            "email": "support@bagisto.com"
+        }
+    ],
+    "require": {
+        "php": "^7.4|^8.0",
+        "laravel/framework": "^8.0|^9.0|^10.0",
+        "laravel/passport": "^10.0|^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ApiServerPackage\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ApiServerPackage\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ApiServerPackage\\Providers\\ApiServerServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}

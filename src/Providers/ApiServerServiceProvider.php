@@ -49,6 +49,7 @@ class ApiServerServiceProvider extends ServiceProvider
         $this->app['router']->aliasMiddleware('profile-api', \ApiServerPackage\Http\Middleware\ProfileApiRequests::class);
         $this->app['router']->aliasMiddleware('compress-api', \ApiServerPackage\Http\Middleware\CompressApiResponse::class);
         $this->app['router']->aliasMiddleware('etag-api', \ApiServerPackage\Http\Middleware\AddEtagHeaders::class);
+        $this->app['router']->aliasMiddleware('api-access', \ApiServerPackage\Http\Middleware\ApiAccessMiddleware::class);
 
         // Register routes
         $this->registerRoutes();
@@ -76,7 +77,7 @@ class ApiServerServiceProvider extends ServiceProvider
             'prefix' => config('api-server.route_prefix', 'api'),
             'middleware' => array_merge(
                 ['api', 'decrypt-query'],
-                config('api-server.use_oauth', true) ? ['check-api-scopes'] : []
+                config('api-server.use_oauth_access_control', true) ? ['api-access'] : []
             ),
         ], function () use ($exposedModels) {
             // Add ping endpoint for connection testing

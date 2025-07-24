@@ -93,6 +93,11 @@ return [
     'use_parallel_queries' => env('API_SERVER_USE_PARALLEL_QUERIES', true),
     'max_parallel_queries' => env('API_SERVER_MAX_PARALLEL_QUERIES', 3),
 
+    // OAuth API access control
+    'use_oauth_access_control' => env('API_SERVER_USE_OAUTH_ACCESS_CONTROL', true),
+    'default_api_scopes' => env('API_SERVER_DEFAULT_API_SCOPES', 'api:access'),
+    'allow_client_credentials_only' => env('API_SERVER_ALLOW_CLIENT_CREDENTIALS_ONLY', true),
+
     /*
     |--------------------------------------------------------------------------
     | File Uploads

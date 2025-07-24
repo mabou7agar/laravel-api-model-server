@@ -1,13 +1,13 @@
 # Laravel API Server
 
-A Laravel package for dynamically exposing Eloquent models as API resources with support for OAuth authentication, encrypted query parameters, and file uploads.
+A Laravel package for dynamically exposing Eloquent models as API resources with support for OAuth API access control, encrypted query parameters, file uploads, and advanced performance optimizations.
 
 ## Features
 
 - **Interface-Based Model Registration**: Expose models via API by implementing a simple interface
 - **Dynamic API Endpoints**: Automatically generates RESTful API endpoints for your models
 - **Eloquent Query Builder Integration**: Translates API parameters into Eloquent queries
-- **OAuth Authentication**: Secure your API with Laravel Passport OAuth 2.0
+- **OAuth API Access Control**: Secure your API with client credentials without user authorization
 - **Encrypted Query Parameters**: Send complex queries as encrypted strings for enhanced security
 - **File Upload Support**: Handle file uploads alongside regular API requests
 - **Granular Access Control**: Define scopes for different operations on your models
@@ -34,32 +34,29 @@ php artisan vendor:publish --provider="ApiServerPackage\Providers\ApiServerServi
 
 ### Step 3: Install Laravel Passport
 
-This package uses Laravel Passport for OAuth authentication:
+This package uses Laravel Passport for OAuth API access control:
 
 ```bash
-composer require laravel/passport
-php artisan passport:install
-```
-
-Add the Passport trait to your User model:
-
-```php
-use Laravel\Passport\HasApiTokens;
-
-class User extends Authenticatable
-{
-    use HasApiTokens, Notifiable;
-    // ...
-}
+composer require laravel/passport "^11.0"
+php artisan passport:install --uuids
 ```
 
 Add Passport routes to your `AuthServiceProvider`:
 
 ```php
+use Laravel\Passport\Passport;
+
 public function boot()
 {
     $this->registerPolicies();
     Passport::routes();
+    
+    // Optional: Define API scopes
+    Passport::tokensCan([
+        'api:access' => 'Access API endpoints',
+        'products:read' => 'Read products',
+        'products:write' => 'Create and update products',
+    ]);
 }
 ```
 
@@ -243,7 +240,7 @@ Route::middleware(['etag-api'])->group(function () {
 
 // Configuration in .env
 API_SERVER_USE_ETAGS=true
-API_SERVER_ETAG_CACHE_MAX_AGE=3600  # 1 hour
+API_SERVER_ETAG_CACHE_MAX_AGE=7200  # 2 hours
 ```
 
 Benefits of ETags:
@@ -251,6 +248,78 @@ Benefits of ETags:
 - Works with client-side caching in browsers and API clients
 - Configurable cache control headers
 - Compatible with CDNs and proxy servers
+
+### OAuth API Access Control
+
+Secures your API with client credentials without requiring user authorization:
+
+```php
+// Apply API access middleware to your routes
+Route::middleware(['api-access'])->group(function () {
+    // Your API routes
+});
+
+// Configuration in .env
+API_SERVER_USE_OAUTH_ACCESS_CONTROL=true
+API_SERVER_DEFAULT_API_SCOPES=api:access
+API_SERVER_ALLOW_CLIENT_CREDENTIALS_ONLY=true
+```
+
+Benefits of API access control:
+- Simplified OAuth implementation focused on API access, not user authentication
+- Client credentials grant type for service-to-service communication
+- Scope-based access control for different API operations
+- No user login or authorization screens required
+- Compatible with API gateways and microservices architecture
+
+To generate client credentials for API access:
+
+```bash
+php artisan passport:client --client
+```
+
+To use the client credentials in your API requests:
+
+```php
+// Get an access token
+$response = Http::post('https://your-api.com/oauth/token', [
+    'grant_type' => 'client_credentials',
+    'client_id' => 'client-id',
+    'client_secret' => 'client-secret',
+    'scope' => 'api:access',
+]);
+
+$accessToken = $response->json()['access_token'];
+
+// Use the token in API requests
+$response = Http::withToken($accessToken)
+    ->get('https://your-api.com/api/products');
+```
+
+> **Note:** This implementation focuses solely on API access control without user authentication. It's designed for service-to-service communication and doesn't require the `HasApiTokens` trait on your User model.
+
+### API Request Profiling
+
+Monitor and optimize API performance:
+
+```php
+// Apply profiling middleware to your routes
+Route::middleware(['profile-api'])->group(function () {
+    // Your API routes
+});
+
+// Configuration in .env
+API_SERVER_ENABLE_PROFILING=true
+API_SERVER_INCLUDE_PROFILING_HEADERS=true
+API_SERVER_SLOW_REQUEST_THRESHOLD=1.0  # seconds
+API_SERVER_STORE_METRICS=true
+```
+
+The profiling system:
+- Measures execution time, memory usage, and database query count
+- Logs slow API requests with configurable thresholds
+- Adds optional performance headers to API responses
+- Stores metrics for later analysis and reporting
 
 ### Database Connection Pooling
 
@@ -340,29 +409,6 @@ Batch operations features:
 - Maintains proper authentication context
 - Automatically invalidates cache for modified resources
 - Returns detailed results for each operation
-
-### API Request Profiling
-
-Monitor and optimize API performance:
-
-```php
-// Apply profiling middleware to your routes
-Route::middleware(['profile-api'])->group(function () {
-    // Your API routes
-});
-
-// Configuration in .env
-API_SERVER_ENABLE_PROFILING=true
-API_SERVER_INCLUDE_PROFILING_HEADERS=true
-API_SERVER_SLOW_REQUEST_THRESHOLD=1.0  # seconds
-API_SERVER_STORE_METRICS=true
-```
-
-The profiling system:
-- Measures execution time, memory usage, and database query count
-- Logs slow API requests with configurable thresholds
-- Adds optional performance headers to API responses
-- Stores metrics for later analysis and reporting
 
 ### Query Optimization
 
